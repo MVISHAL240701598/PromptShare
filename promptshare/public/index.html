@@ -1,0 +1,478 @@
+<!-- File: public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptShare - Community AI Prompts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .card-hover {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .markdown pre {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        .markdown code {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Navigation -->
+        <nav class="flex justify-between items-center mb-12">
+            <div class="flex items-center space-x-2">
+                <img src="./Gem2.png" alt="PromptShare logo - a stylized brain with connecting nodes representing AI and community sharing" class="w-10 h-10 rounded-full" />
+                <h1 class="text-2xl font-bold gradient-text">PromptShare</h1>
+            </div>
+            <div id="auth-buttons" class="flex space-x-4">
+                <button id="login-btn" class="px-4 py-2 text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors">Log In</button>
+                <button id="register-btn" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">Sign Up</button>
+            </div>
+            <div id="user-menu" class="hidden items-center space-x-4">
+                <span id="username-display" class="font-medium"></span>
+                <div class="relative group">
+                    <img id="user-avatar" src="https://placehold.co/40x40" alt="User profile picture - a neutral avatar image" class="w-10 h-10 rounded-full cursor-pointer border-2 border-gray-200" />
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
+                        <button id="logout-btn" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Auth Modals -->
+        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Log In</h2>
+                    <button id="close-login" class="text-gray-500 hover:text-gray-700">&times;</button>
+                </div>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="login-email" class="block text-gray-700 mb-2">Email</label>
+                        <input type="email" id="login-email" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="login-password" class="block text-gray-700 mb-2">Password</label>
+                        <input type="password" id="login-password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Log In</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Create Account</h2>
+                    <button id="close-register" class="text-gray-500 hover:text-gray-700">&times;</button>
+                </div>
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label for="register-username" class="block text-gray-700 mb-2">Username</label>
+                        <input type="text" id="register-username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-email" class="block text-gray-700 mb-2">Email</label>
+                        <input type="email" id="register-email" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="register-password" class="block text-gray-700 mb-2">Password</label>
+                        <input type="password" id="register-password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Sign Up</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="prompts-section" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Community AI Prompts</h2>
+                <button id="add-prompt-btn" class="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    <span>Add New Prompt</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Prompt Form Modal -->
+            <div id="prompt-form-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Share Your AI Prompt</h2>
+                        <button id="close-prompt-form" class="text-gray-500 hover:text-gray-700">&times;</button>
+                    </div>
+                    <form id="prompt-form">
+                        <div class="mb-4">
+                            <label for="prompt-title" class="block text-gray-700 mb-2">Title</label>
+                            <input type="text" id="prompt-title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="prompt-description" class="block text-gray-700 mb-2">Description</label>
+                            <textarea id="prompt-description" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="prompt-content" class="block text-gray-700 mb-2">Prompt Content</label>
+                            <textarea id="prompt-content" rows="6" class="w-full px-3 py-2 border rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="prompt-tags" class="block text-gray-700 mb-2">Tags (comma separated)</label>
+                            <input type="text" id="prompt-tags" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., writing, marketing, code">
+                        </div>
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" id="cancel-prompt" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Submit Prompt</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Prompts List -->
+            <div id="prompts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Prompts will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Welcome Section -->
+        <div id="welcome-section" class="text-center py-16">
+            <img src="./Gemini_Generated_Image_6z75j46z75j46z75.png" alt="AI and community collaboration concept illustrating people sharing ideas with an artificial intelligence interface" class="mx-auto mb-8 rounded-lg shadow-lg w-full max-w-3xl" />
+            <h1 class="text-4xl font-bold mb-6 gradient-text">Share and Discover AI Prompts</h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Join our community to share your best AI prompts and find inspiration from others. Get started by creating an account!</p>
+            <button id="welcome-register-btn" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">Sign Up Now</button>
+        </div>
+    </div>
+
+    <script>
+        class PromptShareApp {
+            constructor() {
+                this.currentUser = null;
+                this.initEventListeners();
+                this.checkAuthState();
+
+                // Load prompts if user is logged in
+                if (this.isAuthenticated()) {
+                    this.loadPrompts();
+                }
+            }
+
+            isAuthenticated() {
+                return this.currentUser !== null;
+            }
+
+            async checkAuthState() {
+                try {
+                    const response = await fetch('/api/check-auth');
+                    const data = await response.json();
+                    
+                    if (data.isAuthenticated) {
+                        this.currentUser = data.user;
+                        this.updateUIForAuthState();
+                        
+                        // Load prompts after confirming auth state
+                        this.loadPrompts();
+                    } else {
+                        this.showWelcomeScreen();
+                    }
+                } catch (err) {
+                    console.error('Error checking auth state:', err);
+                    this.showWelcomeScreen();
+                }
+            }
+
+            showWelcomeScreen() {
+                document.getElementById('welcome-section').classList.remove('hidden');
+                document.getElementById('prompts-section').classList.add('hidden');
+            }
+
+            showPromptsScreen() {
+                document.getElementById('welcome-section').classList.add('hidden');
+                document.getElementById('prompts-section').classList.remove('hidden');
+            }
+
+            updateUIForAuthState() {
+                const authButtons = document.getElementById('auth-buttons');
+                const userMenu = document.getElementById('user-menu');
+                const usernameDisplay = document.getElementById('username-display');
+
+                if (this.isAuthenticated()) {
+                    authButtons.classList.add('hidden');
+                    userMenu.classList.remove('hidden');
+                    usernameDisplay.textContent = this.currentUser.username;
+                    this.showPromptsScreen();
+                } else {
+                    authButtons.classList.remove('hidden');
+                    userMenu.classList.add('hidden');
+                    this.showWelcomeScreen();
+                }
+            }
+
+            initEventListeners() {
+                // Auth buttons
+                document.getElementById('login-btn').addEventListener('click', () => this.toggleModal('login-modal'));
+                document.getElementById('register-btn').addEventListener('click', () => this.toggleModal('register-modal'));
+                document.getElementById('welcome-register-btn').addEventListener('click', () => this.toggleModal('register-modal'));
+                document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+                
+                // Modal close buttons
+                document.getElementById('close-login').addEventListener('click', () => this.toggleModal('login-modal'));
+                document.getElementById('close-register').addEventListener('click', () => this.toggleModal('register-modal'));
+                document.getElementById('close-prompt-form').addEventListener('click', () => this.toggleModal('prompt-form-modal'));
+                document.getElementById('cancel-prompt').addEventListener('click', () => this.toggleModal('prompt-form-modal'));
+                
+                // Add prompt button
+                document.getElementById('add-prompt-btn').addEventListener('click', () => this.toggleModal('prompt-form-modal'));
+                
+                // Forms
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.login();
+                });
+                document.getElementById('register-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.register();
+                });
+                document.getElementById('prompt-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.createPrompt();
+                });
+            }
+
+            toggleModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.toggle('hidden');
+            }
+
+            async login() {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.currentUser = data.user;
+                        this.updateUIForAuthState();
+                        this.toggleModal('login-modal');
+                        this.loadPrompts();
+                        // Clear form
+                        document.getElementById('login-form').reset();
+                    } else {
+                        alert(data.message || 'Login failed');
+                    }
+                } catch (err) {
+                    console.error('Login error:', err);
+                    alert('An error occurred during login');
+                }
+            }
+
+            async register() {
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.currentUser = data.user;
+                        this.updateUIForAuthState();
+                        this.toggleModal('register-modal');
+                        this.loadPrompts();
+                        // Clear form
+                        document.getElementById('register-form').reset();
+                    } else {
+                        alert(data.message || 'Registration failed');
+                    }
+                } catch (err) {
+                    console.error('Registration error:', err);
+                    alert('An error occurred during registration');
+                }
+            }
+
+            async logout() {
+                try {
+                    const response = await fetch('/api/logout', {
+                        method: 'POST'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.currentUser = null;
+                        this.updateUIForAuthState();
+                    } else {
+                        alert('Logout failed');
+                    }
+                } catch (err) {
+                    console.error('Logout error:', err);
+                }
+            }
+
+            async loadPrompts() {
+                try {
+                    const response = await fetch('/api/prompts');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.renderPrompts(data.prompts);
+                    } else {
+                        console.error('Failed to load prompts:', data.message);
+                    }
+                } catch (err) {
+                    console.error('Error loading prompts:', err);
+                }
+            }
+
+            renderPrompts(prompts) {
+                const container = document.getElementById('prompts-container');
+                container.innerHTML = '';
+                
+                if (prompts.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500">No prompts yet. Be the first to share!</p>';
+                    return;
+                }
+                
+                prompts.forEach(prompt => {
+                    const promptCard = document.createElement('div');
+                    promptCard.className = 'bg-white rounded-lg shadow-md overflow-hidden card-hover fade-in';
+                    promptCard.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-gray-800">${this.escapeHtml(prompt.title)}</h3>
+                                <span class="text-sm text-gray-500">${new Date(prompt.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p class="text-gray-600 mb-3">${this.escapeHtml(prompt.description)}</p>
+                            <div class="markdown bg-gray-50 p-4 rounded mb-4 overflow-x-auto">
+                                <pre>${this.escapeHtml(prompt.content)}</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="flex space-x-2">
+                                    ${prompt.tags.split(',').map(tag => `
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag.trim()}</span>
+                                    `).join('')}
+                                </div>
+                                <button class="like-btn flex items-center space-x-1 text-gray-500 hover:text-red-500" data-prompt-id="${prompt.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                    <span>${prompt.likes}</span>
+                                </button>
+                            </div>
+                            <div class="mt-3 text-sm text-gray-400">
+                                Shared by ${prompt.username}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(promptCard);
+                });
+                
+                // Add event listeners to like buttons
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const promptId = e.currentTarget.getAttribute('data-prompt-id');
+                        this.likePrompt(promptId);
+                    });
+                });
+            }
+
+            async likePrompt(promptId) {
+                try {
+                    const response = await fetch(`/api/prompts/${promptId}/like`, {
+                        method: 'POST'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.loadPrompts();
+                    } else {
+                        console.error('Failed to like prompt:', data.message);
+                    }
+                } catch (err) {
+                    console.error('Error liking prompt:', err);
+                }
+            }
+
+            async createPrompt() {
+                const title = document.getElementById('prompt-title').value;
+                const description = document.getElementById('prompt-description').value;
+                const content = document.getElementById('prompt-content').value;
+                const tags = document.getElementById('prompt-tags').value;
+                
+                try {
+                    const response = await fetch('/api/prompts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, description, content, tags })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.toggleModal('prompt-form-modal');
+                        document.getElementById('prompt-form').reset();
+                        this.loadPrompts();
+                    } else {
+                        alert(data.message || 'Failed to create prompt');
+                    }
+                } catch (err) {
+                    console.error('Error creating prompt:', err);
+                    alert('An error occurred while creating the prompt');
+                }
+            }
+
+            escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        }
+
+        // Initialize the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new PromptShareApp();
+        });
+    </script>
+</body>
+</html>
